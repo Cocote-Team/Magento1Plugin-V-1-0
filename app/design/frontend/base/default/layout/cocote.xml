@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<layout version="0.1.0">
+    <default>
+        <reference name="head">
+            <action method="addItem"><type>skin_js</type><name>js/cocote-script-fr.min.js</name></action>
+        </reference>
+        <reference name="before_body_end">
+            <block type="core/template" before="-" name="cocote" template="cocote/cocote.phtml" />
+        </reference>
+    </default>
+</layout>

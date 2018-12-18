@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <Cocote_Export>
+            <active>true</active>
+            <codePool>community</codePool>
+        </Cocote_Export>
+    </modules>
+</config>

@@ -1,0 +1,12 @@
+.cocote-label span,
+.cocote-label span.active {
+    background : url("cocotte_logo_small2.png") no-repeat scroll 0 0 transparent !important;
+    height     : 0px;
+    overflow   : hidden;
+    padding    : 25px 0px 0px 0px !important;
+    margin     : 0.2em 0em -1.3em 1.5em;
+}
+
+.cocote-label.active {
+    border-bottom : medium none !important;
+}

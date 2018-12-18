@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<layout>
+    <adminhtml_system_config_edit>
+        <reference name="head">
+            <action method="addCss"><name>cocote/cocote_admin.css</name></action>
+            <action method="addItem"><type>skin_js</type><name>cocote/cocote_admin.js</name></action>
+        </reference>
+    </adminhtml_system_config_edit>
+</layout>
