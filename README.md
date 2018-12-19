@@ -1,6 +1,6 @@
 # Magento 1 Module for Cocote.com website.
 
-This module generates feed and communicates with cocote.com website to let it aggregate your products data.
+This module generates feed and communicates with cocote.com website to let it aggregate your products data and monitor related orders.
 
 Installation
 To install the module just copy content of the module to main folder of your application.
@@ -15,7 +15,7 @@ File will be refreshed each day at 3.00 A.M. by cron tasks.
 
 # Plugin Cocote pour Magento 1
 
-Ce module communique avec Cocote.com et genere un flux xml de vos offres produits.
+Ce module communique avec Cocote.com et genere un flux xml de vos offres produits et permet de faire le suivi de vos ventes liées.
 
 Pour installer ce module:
 
@@ -28,3 +28,5 @@ Telecharger ce module (via le boutton ci-dessus 'clone or dowload') sur votre se
 Vider les caches magento (Système > Gestion du Cache > "Flush Magento Cache") et activer le cache 'Cocote Cache'
 
 Le module cocote est ensuite accessible depuis Système->configuration (l’icône doit apparaître sur la colonne de gauche)
+
+Le flux xml sera mis à jour automatiquement chaque jour vers 3 heure du matin depuis le gestionaire de tache cron.
