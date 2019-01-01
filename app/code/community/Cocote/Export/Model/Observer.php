@@ -87,6 +87,9 @@ class Cocote_Export_Model_Observer
             $backend = $attribute->getBackend();
             $backend->afterLoad($product);
 
+            $imageLink='';
+            $imageSecondaryLink='';
+
             foreach ($product->getMediaGalleryImages() as $image) { //if they have default one set
                 if ($image->getFile() && $image->getFile() == $product->getImage()) {
                     $imageLink = $image->getUrl();
