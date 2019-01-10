@@ -90,6 +90,10 @@ class Cocote_Export_Model_Observer
             $imageLink='';
             $imageSecondaryLink='';
 
+            if($product->getImage() && $product->getImage()!='no_selection') {
+                $imageLink = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA) . 'catalog/product'.$product->getImage();
+            }
+
             foreach ($product->getMediaGalleryImages() as $image) { //if they have default one set
                 if ($image->getFile() && $image->getFile() == $product->getImage()) {
                     $imageLink = $image->getUrl();
