@@ -192,8 +192,8 @@ class Cocote_Export_Model_Observer
         try {
             $order = $observer->getEvent()->getOrder();
 
-            $stateProcessing = $order::STATE_PROCESSING;
-            if ($order->getState() == $stateProcessing && $order->getOrigData('state') != $stateProcessing) {
+            $stateComplete = $order::STATE_COMPLETE;
+            if ($order->getState() == $stateComplete && $order->getOrigData('state') != $stateComplete) {
                 $data=[
                     'state'=>$order->getState(),
                     'orig_state'=>$order->getOrigData('state'),
