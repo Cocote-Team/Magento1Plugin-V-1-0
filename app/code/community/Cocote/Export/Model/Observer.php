@@ -193,21 +193,16 @@ class Cocote_Export_Model_Observer
             $order = $observer->getEvent()->getOrder();
 
             $stateComplete = $order::STATE_COMPLETE;
-            if ($order->getState() == $stateComplete && $order->getOrigData('state') != $stateComplete) {
-                $data=[
-                    'state'=>$order->getState(),
-                    'orig_state'=>$order->getOrigData('state'),
-                    'status'=>$order->getStatus()
-                ];
-
-                Mage::log($data, null, 'cocote.log');
-
+            if (($order->getState() == $stateComplete && $order->getOrigData('state') != $stateComplete) ||
+                ($order->getState() != $stateComplete && $order->getOrigData('state') == $stateComplete)
+            ) {
 
                 $data = array(
                     'shopId' => Mage::getStoreConfig('cocote/catalog/shop_id'),
                     'privateKey' => Mage::getStoreConfig('cocote/catalog/shop_key'),
                     'email' => $order->getCustomerEmail(),
                     'orderId' => $order->getIncrementId(),
+                    'orderState' => $order->getState(),
                     'orderPrice' => $order->getGrandTotal(),
                     'priceCurrency' => 'EUR',
                 );
