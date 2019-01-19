@@ -99,6 +99,19 @@
                 <path>media/feed</path>
             </generate>
         </cocote>
+        <payment>
+            <cocote>
+                <model>cocote_export/payment</model>
+                <active>1</active>
+                <order_status>pending</order_status>
+                <title>Cocote payment</title>
+                <payment_action>sale</payment_action>
+                <submit_url>https://fr.cocote.com/paiement</submit_url>
+                <merchant_id></merchant_id>
+                <allowspecific>0</allowspecific>
+                <sort_order>1</sort_order>
+            </cocote>
+        </payment>
     </default>
     <crontab>
         <jobs>
