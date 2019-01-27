@@ -190,6 +190,8 @@ class Cocote_Export_Model_Observer
             }
         );
         try {
+            $mappedStatuses=array('complete'=>'completed');
+
             $order = $observer->getEvent()->getOrder();
 
             $stateComplete = $order::STATE_COMPLETE;
@@ -197,12 +199,17 @@ class Cocote_Export_Model_Observer
                 ($order->getState() != $stateComplete && $order->getOrigData('state') == $stateComplete)
             ) {
 
+                $orderState=$order->getState();
+                if(isset($mappedStatuses[$orderState])) {
+                    $orderState=$mappedStatuses[$orderState];
+                }
+
                 $data = array(
                     'shopId' => Mage::getStoreConfig('cocote/catalog/shop_id'),
                     'privateKey' => Mage::getStoreConfig('cocote/catalog/shop_key'),
                     'email' => $order->getCustomerEmail(),
                     'orderId' => $order->getIncrementId(),
-                    'orderState' => $order->getState(),
+                    'orderState' => $orderState,
                     'orderPrice' => $order->getGrandTotal(),
                     'priceCurrency' => 'EUR',
                 );
