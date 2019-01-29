@@ -1,6 +1,6 @@
 <?php
 
-class Cocote_Export_Adminhtml_CocoteController extends Mage_Adminhtml_Controller_Action
+class Cocote_Feed_Adminhtml_CocoteController extends Mage_Adminhtml_Controller_Action
 {
 
 
@@ -14,8 +14,8 @@ class Cocote_Export_Adminhtml_CocoteController extends Mage_Adminhtml_Controller
         $session = Mage::getSingleton("adminhtml/session");
 
         try {
-            Mage::getModel('cocote_export/observer')->generateFeed();
-            $session->addSuccess(Mage::helper('cocote_export')->__("Generating done"));
+            Mage::getModel('cocote_feed/observer')->generateFeed();
+            $session->addSuccess(Mage::helper('cocote_feed')->__("Generating done"));
         } catch (Exception $e) {
             Mage::getSingleton("core/session")->addError($e->getMessage());
         }

@@ -1,6 +1,6 @@
 <?php
 
-class Cocote_Export_Helper_Data extends Mage_Core_Helper_Abstract
+class Cocote_Feed_Helper_Data extends Mage_Core_Helper_Abstract
 {
 
     public function getFilePath()

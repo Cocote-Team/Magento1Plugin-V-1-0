@@ -11,7 +11,7 @@ class Mage_Shell_Cocote_Test extends Mage_Shell_Abstract
     public function run()
     {
         try {
-            Mage::getModel('cocote_export/observer')->generateFeed();
+            Mage::getModel('cocote_feed/observer')->generateFeed();
         } catch (Exception $e) {
             Mage::log($e->getMessage());
         }

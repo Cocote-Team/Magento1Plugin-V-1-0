@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <config>
     <sections>
-        <cocote module="cocote_export" translate="label">
+        <cocote module="cocote_feed" translate="label">
             <label>Cocote Export Settings</label>
             <class>cocote-label</class>
             <sort_order>999</sort_order>
@@ -35,28 +35,28 @@
                         <store translate="label">
                             <label>Default store</label>
                             <frontend_type>select</frontend_type>
-                            <source_model>cocote_export/source_stores</source_model>
+                            <source_model>cocote_feed/source_stores</source_model>
                             <sort_order>4</sort_order>
                             <show_in_default>1</show_in_default>
                         </store>
                         <map_name translate="label" >
                             <label>Map name attribute</label>
                             <frontend_type>select</frontend_type>
-                            <source_model>cocote_export/source_attributes</source_model>
+                            <source_model>cocote_feed/source_attributes</source_model>
                             <sort_order>5</sort_order>
                             <show_in_default>1</show_in_default>
                         </map_name>
                         <map_mpn translate="label" >
                             <label>Map MPN attribute</label>
                             <frontend_type>select</frontend_type>
-                            <source_model>cocote_export/source_attributes</source_model>
+                            <source_model>cocote_feed/source_attributes</source_model>
                             <sort_order>6</sort_order>
                             <show_in_default>1</show_in_default>
                         </map_mpn>
                         <map_description translate="label" >
                             <label>Map Description attribute</label>
                             <frontend_type>select</frontend_type>
-                            <source_model>cocote_export/source_attributes</source_model>
+                            <source_model>cocote_feed/source_attributes</source_model>
                             <sort_order>7</sort_order>
                             <show_in_default>1</show_in_default>
                         </map_description>
@@ -64,14 +64,14 @@
                             <label>Map Gtin attribute</label>
                             <comment>(European Article Numbering)</comment>
                             <frontend_type>select</frontend_type>
-                            <source_model>cocote_export/source_attributes</source_model>
+                            <source_model>cocote_feed/source_attributes</source_model>
                             <sort_order>8</sort_order>
                             <show_in_default>1</show_in_default>
                         </map_gtin>
                         <map_manufacturer translate="label" >
                             <label>Map Brand/Manufacturer attribute</label>
                             <frontend_type>select</frontend_type>
-                            <source_model>cocote_export/source_attributes</source_model>
+                            <source_model>cocote_feed/source_attributes</source_model>
                             <sort_order>9</sort_order>
                             <show_in_default>1</show_in_default>
                         </map_manufacturer>
@@ -94,14 +94,14 @@
                         <in_stock_only translate="label,comment">
                             <label>Export only 'in stock' products</label>
                             <frontend_type>checkbox</frontend_type>
-                            <frontend_model>cocote_export/adminhtml_system_config_checkboxstock</frontend_model>
+                            <frontend_model>cocote_feed/adminhtml_system_config_checkboxstock</frontend_model>
                             <sort_order>3</sort_order>
                             <show_in_default>1</show_in_default>
                         </in_stock_only>
                         <generate translate="label,comment">
                             <label>Generate feed</label>
                             <frontend_type>button</frontend_type>
-                            <frontend_model>cocote_export/adminhtml_system_config_buttongenerate</frontend_model>
+                            <frontend_model>cocote_feed/adminhtml_system_config_buttongenerate</frontend_model>
                             <sort_order>4</sort_order>
                             <show_in_default>1</show_in_default>
                         </generate>
@@ -109,7 +109,7 @@
                             <label>Link to feed</label>
                             <comment>Your flow will be regenerated automatically on daily basis at 3 o'clock am</comment>
                             <frontend_type>link</frontend_type>
-                            <frontend_model>cocote_export/adminhtml_system_config_link</frontend_model>
+                            <frontend_model>cocote_feed/adminhtml_system_config_link</frontend_model>
                             <sort_order>6</sort_order>
                             <show_in_default>1</show_in_default>
                         </link>

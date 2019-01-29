@@ -1,39 +1,39 @@
 <?xml version="1.0"?>
 <config>
     <modules>
-        <Cocote_Export>
+        <Cocote_Feed>
             <version>0.9.1</version>
-        </Cocote_Export>
+        </Cocote_Feed>
     </modules>
     <global>
         <models>
-            <cocote_export>
-                <class>Cocote_Export_Model</class>
-            </cocote_export>
+            <cocote_feed>
+                <class>Cocote_Feed_Model</class>
+            </cocote_feed>
         </models>
         <blocks>
-            <cocote_export>
-                <class>Cocote_Export_Block</class>
-            </cocote_export>
+            <cocote_feed>
+                <class>Cocote_Feed_Block</class>
+            </cocote_feed>
         </blocks>
         <helpers>
-            <cocote_export>
-                <class>Cocote_Export_Helper</class>
-            </cocote_export>
+            <cocote_feed>
+                <class>Cocote_Feed_Helper</class>
+            </cocote_feed>
         </helpers>
         <resources>
-            <cocote_export_setup>
+            <cocote_feed_setup>
                 <setup>
-                    <module>Cocote_Export</module>
+                    <module>Cocote_Feed</module>
                     <class>Mage_Catalog_Model_Resource_Setup</class>
                 </setup>
-            </cocote_export_setup>
+            </cocote_feed_setup>
         </resources>
         <events>
             <sales_order_save_after>
                 <observers>
                     <cocote_send_order>
-                        <class>cocote_export/observer</class>
+                        <class>cocote_feed/observer</class>
                         <method>sendOrderToCocote</method>
                     </cocote_send_order>
                 </observers>
@@ -43,9 +43,9 @@
     <frontend>
         <layout>
             <updates>
-                <cocote_export>
+                <cocote_feed>
                     <file>cocote.xml</file>
-                </cocote_export>
+                </cocote_feed>
             </updates>
         </layout>
         <product>
@@ -60,18 +60,18 @@
     <adminhtml>
         <layout>
             <updates>
-                <cocote_export>
+                <cocote_feed>
                     <file>cocote.xml</file>
-                </cocote_export>
+                </cocote_feed>
             </updates>
         </layout>
         <translate>
             <modules>
-                <cocote_export>
+                <cocote_feed>
                     <files>
                         <default>Cocote.csv</default>
                     </files>
-                </cocote_export>
+                </cocote_feed>
             </modules>
         </translate>
     </adminhtml>
@@ -80,7 +80,7 @@
             <adminhtml>
                 <args>
                     <modules>
-                        <Cocote_Export before="Mage_Adminhtml">Cocote_Export_Adminhtml</Cocote_Export>
+                        <Cocote_Feed before="Mage_Adminhtml">Cocote_Feed_Adminhtml</Cocote_Feed>
                     </modules>
                 </args>
             </adminhtml>
@@ -107,7 +107,7 @@
                     <cron_expr>0 3 * * *</cron_expr>
                 </schedule>
                 <run>
-                    <model>cocote_export/observer::generateFeed</model>
+                    <model>cocote_feed/observer::generateFeed</model>
                 </run>
             </generate_cocote_feed>
         </jobs>

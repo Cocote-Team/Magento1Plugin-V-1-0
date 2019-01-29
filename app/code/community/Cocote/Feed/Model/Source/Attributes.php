@@ -1,5 +1,5 @@
 <?php
-class Cocote_Export_Model_Source_Attributes extends Mage_Eav_Model_Entity_Attribute_Source_Abstract
+class Cocote_Feed_Model_Source_Attributes extends Mage_Eav_Model_Entity_Attribute_Source_Abstract
 {
 
     public function toOptionArray()

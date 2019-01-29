@@ -1,6 +1,6 @@
 <?php
 
-class Cocote_Export_Model_Observer
+class Cocote_Feed_Model_Observer
 {
     public $mapping = array();
 
@@ -165,7 +165,7 @@ class Cocote_Export_Model_Observer
             }
         }
 
-        $domtree->save(Mage::helper('cocote_export')->getFilePath());
+        $domtree->save(Mage::helper('cocote_feed')->getFilePath());
 
         Mage::app()->setCurrentStore(Mage::getModel('core/store')->load(Mage_Core_Model_App::ADMIN_STORE_ID));
         return $validate;
