@@ -21,14 +21,6 @@
                 <class>Cocote_Feed_Helper</class>
             </cocote_feed>
         </helpers>
-        <resources>
-            <cocote_feed_setup>
-                <setup>
-                    <module>Cocote_Feed</module>
-                    <class>Mage_Catalog_Model_Resource_Setup</class>
-                </setup>
-            </cocote_feed_setup>
-        </resources>
         <events>
             <sales_order_save_after>
                 <observers>
