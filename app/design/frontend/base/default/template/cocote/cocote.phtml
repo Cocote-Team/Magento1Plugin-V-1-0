@@ -1,7 +1,8 @@
 <?php $shopId=addslashes(Mage::getStoreConfig('cocote/catalog/shop_id')); ?>
 
 <?php if($shopId): ?>
-<script type="text/javascript">
+<script src="http://js.cocote.com/script-fr.min.js"></script>
+    <script type="text/javascript">
     new CocoteTSA({
         lang: "fr",
         mSiteId: "<?php echo $shopId; ?>"

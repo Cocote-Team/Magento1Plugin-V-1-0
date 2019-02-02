@@ -3,6 +3,7 @@
 class Cocote_Feed_Model_Observer
 {
     public $mapping = array();
+    public $categoriesList=array();
 
     public function __construct()
     {
@@ -48,6 +49,9 @@ class Cocote_Feed_Model_Observer
         $collection->addAttributeToFilter('visibility', array('in'=>array(2,3,4))); //2/3/4 = catalog/search/both                
         $collection->addAttributeToFilter('status', 1);
 
+//        $collection->joinField('category_id', 'catalog/category_product', 'category_id', 'product_id = entity_id', null, 'right');
+//        $collection->getSelect()->distinct();
+
         foreach ($this->mapping as $attribute) {
             $collection->addAttributeToSelect($attribute);
         }
@@ -81,6 +85,7 @@ class Cocote_Feed_Model_Observer
         $offers = $xmlRoot->appendChild($offers);
 
         foreach ($productCollection as $product) {
+
             $imageUsed = 0;
             $attributeCode = 'media_gallery';
             $attribute = $product->getResource()->getAttribute($attributeCode);
@@ -156,6 +161,11 @@ class Cocote_Feed_Model_Observer
                 }
             }
 
+            if($catName=$this->getBestCategory($product->getCategoryIds())) {
+                $currentprod->appendChild($domtree->createElement('category', $catName));
+            }
+
+
             if ($imageLink) {
                 $currentprod->appendChild($domtree->createElement('image_link', $imageLink));
             }
@@ -204,7 +214,13 @@ class Cocote_Feed_Model_Observer
                     $orderState=$mappedStatuses[$orderState];
                 }
 
-                $data = array(
+                $skus=array();
+                foreach ($order->getAllVisibleItems() as $item) {
+                    $skus[]=$item->getSku();
+                }
+                $skus=implode(',',$skus);
+
+                    $data = array(
                     'shopId' => Mage::getStoreConfig('cocote/catalog/shop_id'),
                     'privateKey' => Mage::getStoreConfig('cocote/catalog/shop_key'),
                     'email' => $order->getCustomerEmail(),
@@ -212,6 +228,7 @@ class Cocote_Feed_Model_Observer
                     'orderState' => $orderState,
                     'orderPrice' => $order->getGrandTotal(),
                     'priceCurrency' => 'EUR',
+                    'skus'=>$skus
                 );
                 Mage::log($data, null, 'cocote.log');
 
@@ -224,8 +241,8 @@ class Cocote_Feed_Model_Observer
                 curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
                 curl_setopt($curl, CURLOPT_URL, "https://fr.cocote.com/api/cashback/request");
                 curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-                $result = curl_exec($curl);
-                curl_close($curl);
+//                $result = curl_exec($curl);
+//                curl_close($curl);
             }
         } catch (Exception $e) {
             Mage::log($e->getMessage(), null, 'cocote.log');
@@ -294,5 +311,54 @@ class Cocote_Feed_Model_Observer
         }
         return $price;
     }
+
+    public function getBestCategory($ids) {
+        $ret='';
+        if(!sizeof($ids)) {
+            return $ret;
+        }
+        $level=0;
+        foreach($ids as $id) {
+            $category=$this->getCategory($id);
+            if($category['level']>$level) {
+                $bestCategory=$category;
+                $level=$category['level'];
+            }
+        }
+        $path=explode('/',$bestCategory['path']);
+        for($i=2;$i<sizeof($path)-1;$i++) {
+            $cat=$this->getCategory($path[$i]);
+            $ret.=$this->formatCategoryName($cat['name']).'>';
+        }
+        $ret.=$this->formatCategoryName($bestCategory['name']);
+        return $ret;
+    }
+
+    public function formatCategoryName($name) {
+        $name=str_replace(' ','-',$name);
+        $regexp = '/&([a-z]{1,2})(acute|cedil|circ|grave|lig|orn|ring|slash|th|tilde|uml|caron);/i';
+        $name=html_entity_decode(preg_replace($regexp, '$1', htmlentities($name)));
+        return $name;
+    }
+
+    public function getCategory($id) {
+
+        if(!sizeof($this->categoriesList)) {
+            $defaultStoreView = $this->getDefaultStoreView();
+            $categories=array();
+
+            $allCategories = Mage::getModel('catalog/category')->getCollection()->addAttributeToSelect(['name']);
+            $allCategories->setStoreId($defaultStoreView);
+
+            foreach($allCategories as $cat) {
+                $categories[$cat->getId()]['name'] = $cat->getName();
+                $categories[$cat->getId()]['level'] = $cat->getLevel();
+                $categories[$cat->getId()]['path'] = $cat->getPath();
+            }
+            $this->categoriesList=$categories;
+        }
+        return $this->categoriesList[$id];
+    }
+
 }
 
