@@ -79,6 +79,8 @@ class Cocote_Feed_Model_Observer
 
         $generated = $domtree->createElement('generated',Mage::getModel('core/date')->gmtDate('Y-m-d H:i:s'));
         $generated->setAttribute('cms', 'magento');
+        $version=(string)Mage::getConfig()->getNode('modules/Cocote_Feed/version');
+        $generated->setAttribute('plugin_version',$version);
         $xmlRoot->appendChild($generated);
 
         $offers = $domtree->createElement("offers");
