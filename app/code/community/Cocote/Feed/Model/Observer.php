@@ -131,7 +131,7 @@ class Cocote_Feed_Model_Observer
 
             $currentprod->appendChild($domtree->createElement('identifier', $product->getId()));
             $currentprod->appendChild($domtree->createElement('link', $url));
-            $currentprod->appendChild($domtree->createElement('keywords', $product->getData('meta_keyword')));
+            $currentprod->appendChild($domtree->createElement('keywords', htmlspecialchars($product->getData('meta_keyword'))));
 
             if ($product->getTypeId() == 'configurable') {
                 $price = Mage::helper('core')->formatPrice($this->getConfigurableLowestPrice($product->getId()), false);
@@ -164,9 +164,8 @@ class Cocote_Feed_Model_Observer
             }
 
             if($catName=$this->getBestCategory($product->getCategoryIds())) {
-                $currentprod->appendChild($domtree->createElement('category', $catName));
+                $currentprod->appendChild($domtree->createElement('category', htmlspecialchars($catName)));
             }
-
 
             if ($imageLink) {
                 $currentprod->appendChild($domtree->createElement('image_link', $imageLink));
@@ -243,8 +242,8 @@ class Cocote_Feed_Model_Observer
                 curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
                 curl_setopt($curl, CURLOPT_URL, "https://fr.cocote.com/api/cashback/request");
                 curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-//                $result = curl_exec($curl);
-//                curl_close($curl);
+                $result = curl_exec($curl);
+                curl_close($curl);
             }
         } catch (Exception $e) {
             Mage::log($e->getMessage(), null, 'cocote.log');
@@ -349,7 +348,7 @@ class Cocote_Feed_Model_Observer
             $defaultStoreView = $this->getDefaultStoreView();
             $categories=array();
 
-            $allCategories = Mage::getModel('catalog/category')->getCollection()->addAttributeToSelect(['name']);
+            $allCategories = Mage::getModel('catalog/category')->getCollection()->addAttributeToSelect('name');
             $allCategories->setStoreId($defaultStoreView);
 
             foreach($allCategories as $cat) {
