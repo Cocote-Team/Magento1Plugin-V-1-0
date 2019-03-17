@@ -57,8 +57,13 @@ class Cocote_Feed_Model_Observer
         }
 
         if (Mage::getStoreConfig('cocote/generate/in_stock_only')) {
-            $collection->getSelect()->join('cataloginventory_stock_item', 'cataloginventory_stock_item.product_id = e.entity_id', array('is_in_stock','manage_stock'));
-            $collection->getSelect()->where("cataloginventory_stock_item.manage_stock=0 OR cataloginventory_stock_item.is_in_stock = 1");
+            $collection->getSelect()->join('cataloginventory_stock_item', 'cataloginventory_stock_item.product_id = e.entity_id', array('is_in_stock','manage_stock','use_config_manage_stock'));
+            if (Mage::getStoreConfig('cataloginventory/item_options/manage_stock')) {
+                $collection->getSelect()->where("(cataloginventory_stock_item.use_config_manage_stock=0 AND cataloginventory_stock_item.manage_stock=0) OR cataloginventory_stock_item.is_in_stock = 1");
+            }
+            else { //config set to "no"
+                $collection->getSelect()->where("(cataloginventory_stock_item.use_config_manage_stock=1 OR cataloginventory_stock_item.manage_stock=0) OR cataloginventory_stock_item.is_in_stock = 1");
+            }
         }
 
         return $collection;
