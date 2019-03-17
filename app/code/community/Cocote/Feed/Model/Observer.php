@@ -245,6 +245,7 @@ class Cocote_Feed_Model_Observer
                 $curl = curl_init();
                 curl_setopt($curl, CURLOPT_POST, 1);
                 curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+                curl_setopt($curl, CURLOPT_TIMEOUT_MS, 1000);
                 curl_setopt($curl, CURLOPT_URL, "https://fr.cocote.com/api/cashback/request");
                 curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
                 $result = curl_exec($curl);
