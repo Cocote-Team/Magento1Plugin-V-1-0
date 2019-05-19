@@ -2,7 +2,7 @@
 <config>
     <modules>
         <Cocote_Feed>
-            <version>0.9.7</version>
+            <version>0.9.8</version>
         </Cocote_Feed>
     </modules>
     <global>

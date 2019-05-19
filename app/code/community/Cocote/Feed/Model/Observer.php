@@ -43,6 +43,9 @@ class Cocote_Feed_Model_Observer
         $collection->addUrlRewrite();
         $collection->addWebsiteFilter($defaultStoreView);
         $collection->addAttributeToSelect('price');
+        $collection->addAttributeToSelect('special_price');
+        $collection->addAttributeToSelect('special_price_to');
+        $collection->addAttributeToSelect('special_price_from');
         $collection->addAttributeToSelect('image');
         $collection->addAttributeToSelect('meta_keyword');
 
@@ -65,6 +68,15 @@ class Cocote_Feed_Model_Observer
                 $collection->getSelect()->where("(cataloginventory_stock_item.use_config_manage_stock=1 OR cataloginventory_stock_item.manage_stock=0) OR cataloginventory_stock_item.is_in_stock = 1");
             }
         }
+
+        $collection->joinField(
+                'qty',
+                'cataloginventory/stock_item',
+                'qty',
+                'product_id=entity_id',
+                '{{table}}.stock_id=1',
+                'left'
+            );
 
         return $collection;
     }
@@ -139,13 +151,21 @@ class Cocote_Feed_Model_Observer
             $currentprod->appendChild($domtree->createElement('keywords', htmlspecialchars($product->getData('meta_keyword'))));
 
             if ($product->getTypeId() == 'configurable') {
-                $price = Mage::helper('core')->formatPrice($this->getConfigurableLowestPrice($product->getId()), false);
+                $priceOptions = $this->getConfigurableOptions($product,$domtree);
+                $currentprod->appendChild($priceOptions);
+//                $price = Mage::helper('core')->formatPrice($this->getConfigurableLowestPrice($product->getId()), false);
             }
             elseif ($product->getTypeId() == 'bundle') {
                 $price = Mage::helper('core')->formatPrice($this->getBundlePrice($product), false);
             }
-            else {
-                $price = Mage::helper('core')->formatPrice($product->getFinalPrice(), false);
+            else {//simple
+                $price=$product->getFinalPrice();
+                $discountPrice=Mage::getModel('catalogrule/rule')->calcProductPriceRule($product,$product->getPrice());
+                if($discountPrice && $discountPrice<$price) {
+                    $price=$discountPrice;
+                }
+                $price = Mage::helper('core')->formatPrice($price, false);
+                $currentprod->appendChild($domtree->createElement('stock', (int)$product->getQty()));
             }
 
             $currentprod->appendChild($domtree->createElement('price', $price));
@@ -367,5 +387,45 @@ class Cocote_Feed_Model_Observer
         return $this->categoriesList[$id];
     }
 
+    public function getConfigurableOptions($product,$domtree) {
+        //$price = Mage::helper('core')->formatPrice($product->getPrice(), false);
+        $price = $product->getFinalPrice();
+        $attributes = $product->getTypeInstance(true)->getConfigurableAttributesAsArray($product);
+
+        $optionsList=$domtree->createElement('options_list');
+        $optionsList->appendChild($domtree->createElement('base_price_vat',$price));
+
+        $attributesMapping=[];
+
+        foreach ($attributes as $attribute) {
+            $attributesMapping[$attribute['attribute_code']]=$attribute['attribute_id'];
+            $optionsGroup=$domtree->createElement('options_group');
+            $optionsGroup->setAttribute('name', $attribute['store_label']);
+            foreach($attribute['values'] as $value) {
+                $optionChoice=$domtree->createElement('option_choice',$value['store_label']);
+                $optionChoice->setAttribute('id', $attribute['attribute_id']."|".$value['value_index']);
+                $optionChoice->setAttribute('addprice', $value['pricing_value']);
+                $optionChoice->setAttribute('is_percent', $value['is_percent']);
+                $optionsGroup->appendChild($optionChoice);
+            }
+            $optionsList->appendChild($optionsGroup);
+        }
+
+
+        $childProducts = Mage::getModel('catalog/product_type_configurable')->getUsedProducts(null,$product);
+        foreach($childProducts as $simpleProd) {
+            $idArray=[];
+            foreach($attributesMapping as $code=>$id) {
+                $idArray[]=$id.'|'.$simpleProd->getData($code);
+            }
+            $stockDOM=$domtree->createElement('stock',(int)$simpleProd->getStockItem()->getQty());
+            $stockDOM->setAttribute('id',implode('-',$idArray));
+            if($simpleProd->getImage()) {
+            $stockDOM->setAttribute('image',Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA) . 'catalog/product'.$simpleProd->getImage());
+            }
+            $optionsList->appendChild($stockDOM);
+        }
+        return $optionsList;
+    }
 }
 
