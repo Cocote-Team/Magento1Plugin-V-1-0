@@ -78,6 +78,15 @@ class Cocote_Feed_Model_Observer
                 'left'
             );
 
+        $collection->joinField(
+            'min_qty',
+            'cataloginventory/stock_item',
+            'min_qty',
+            'product_id=entity_id',
+            '{{table}}.stock_id=1',
+            'left'
+        );
+
         return $collection;
     }
 
@@ -151,9 +160,10 @@ class Cocote_Feed_Model_Observer
             $currentprod->appendChild($domtree->createElement('keywords', htmlspecialchars($product->getData('meta_keyword'))));
 
             if ($product->getTypeId() == 'configurable') {
-                $priceOptions = $this->getConfigurableOptions($product,$domtree);
-                $currentprod->appendChild($priceOptions);
-//                $price = Mage::helper('core')->formatPrice($this->getConfigurableLowestPrice($product->getId()), false);
+                $configurableOptions = $this->getConfigurableOptions($product,$domtree);
+                $currentprod->appendChild($configurableOptions);
+                //$price = Mage::helper('core')->formatPrice($product->getFinalPrice(), false);
+                $price = $product->getFinalPrice();
             }
             elseif ($product->getTypeId() == 'bundle') {
                 $price = Mage::helper('core')->formatPrice($this->getBundlePrice($product), false);
@@ -166,6 +176,7 @@ class Cocote_Feed_Model_Observer
                 }
                 $price = Mage::helper('core')->formatPrice($price, false);
                 $currentprod->appendChild($domtree->createElement('stock', (int)$product->getQty()));
+                $currentprod->appendChild($domtree->createElement('threshold_stock', (int)$product->getData('min_qty')));
             }
 
             $currentprod->appendChild($domtree->createElement('price', $price));
@@ -388,42 +399,53 @@ class Cocote_Feed_Model_Observer
     }
 
     public function getConfigurableOptions($product,$domtree) {
-        //$price = Mage::helper('core')->formatPrice($product->getPrice(), false);
-        $price = $product->getFinalPrice();
+        $optionsList=$domtree->createElement('variations');
+        $attributesMapping=[];
+        $attributesPrices=[];
+
         $attributes = $product->getTypeInstance(true)->getConfigurableAttributesAsArray($product);
 
-        $optionsList=$domtree->createElement('options_list');
-        $optionsList->appendChild($domtree->createElement('base_price_vat',$price));
-
-        $attributesMapping=[];
-
         foreach ($attributes as $attribute) {
-            $attributesMapping[$attribute['attribute_code']]=$attribute['attribute_id'];
-            $optionsGroup=$domtree->createElement('options_group');
-            $optionsGroup->setAttribute('name', $attribute['store_label']);
+            $attributesMapping[$attribute['attribute_code']]=$attribute['store_label'];
             foreach($attribute['values'] as $value) {
-                $optionChoice=$domtree->createElement('option_choice',$value['store_label']);
-                $optionChoice->setAttribute('id', $attribute['attribute_id']."|".$value['value_index']);
-                $optionChoice->setAttribute('addprice', $value['pricing_value']);
-                $optionChoice->setAttribute('is_percent', $value['is_percent']);
-                $optionsGroup->appendChild($optionChoice);
+                $attributesPrices[$attribute['attribute_code']][$value['value_index']]=['addprice'=>$value['pricing_value'],'is_percent'=>$value['is_percent']];
             }
-            $optionsList->appendChild($optionsGroup);
         }
-
 
         $childProducts = Mage::getModel('catalog/product_type_configurable')->getUsedProducts(null,$product);
         foreach($childProducts as $simpleProd) {
             $idArray=[];
+            $simplePrice=$product->getFinalPrice();
             foreach($attributesMapping as $code=>$id) {
-                $idArray[]=$id.'|'.$simpleProd->getData($code);
+                $idArray[]=$id.' - '.$simpleProd->getAttributeText($code);
+                $pricePlus=$attributesPrices[$attribute['attribute_code']][$simpleProd->getData($code)];
+                if($pricePlus['is_percent']) {
+                    $simplePrice=$simplePrice*(100+$pricePlus['addprice'])/100;
+                }
+                else {
+                    $simplePrice+=$pricePlus['addprice'];
+                }
             }
-            $stockDOM=$domtree->createElement('stock',(int)$simpleProd->getStockItem()->getQty());
-            $stockDOM->setAttribute('id',implode('-',$idArray));
+            $variation=$domtree->createElement('variation');
+
+            $variation->appendChild($domtree->createElement('variation_id',$simpleProd->getId()));
+            $variation->appendChild($domtree->createElement('variation_name',$simpleProd->getName()));
+            $variation->appendChild($domtree->createElement('variation_reference',$simpleProd->getSku()));
+            $variation->appendChild($domtree->createElement('variation_stock',(int)$simpleProd->getStockItem()->getQty()));
+            $variation->appendChild($domtree->createElement('variation_threshold_stock',(int)$simpleProd->getStockItem()->getMinQty()));
+            $variation->appendChild($domtree->createElement('variation_price',$simplePrice));
+            $variation->appendChild($domtree->createElement('variation_options',implode(',',$idArray)));
+
+            $descTag=$domtree->createElement('variation_description');
+            $descTag->appendChild($domtree->createCDATASection($simpleProd->getDescription()));
+            $variation->appendChild($descTag);
+
             if($simpleProd->getImage()) {
-            $stockDOM->setAttribute('image',Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA) . 'catalog/product'.$simpleProd->getImage());
+                $image=Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA) . 'catalog/product'.$simpleProd->getImage();
+                $variation->appendChild($domtree->createElement('variation_image',$image));
             }
-            $optionsList->appendChild($stockDOM);
+
+            $optionsList->appendChild($variation);
         }
         return $optionsList;
     }
