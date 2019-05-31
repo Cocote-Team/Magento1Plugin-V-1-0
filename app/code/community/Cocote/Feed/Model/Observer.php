@@ -242,8 +242,10 @@ class Cocote_Feed_Model_Observer
             $order = $observer->getEvent()->getOrder();
 
             $stateComplete = $order::STATE_COMPLETE;
-            if (($order->getState() == $stateComplete && $order->getOrigData('state') != $stateComplete) ||
-                ($order->getState() != $stateComplete && $order->getOrigData('state') == $stateComplete)
+            $stateProcessing=$order::STATE_PROCESSING;
+
+            if (($order->getState() != $order->getOrigData('state'))
+            && (($order->getOrigData('state') == $stateComplete) || $order->getState() == $stateComplete || $order->getState() == $stateProcessing )
             ) {
 
                 $orderState=$order->getState();
