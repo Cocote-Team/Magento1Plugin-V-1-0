@@ -245,7 +245,7 @@ class Cocote_Feed_Model_Observer
             $stateProcessing=$order::STATE_PROCESSING;
 
             if (($order->getState() != $order->getOrigData('state'))
-            && (($order->getOrigData('state') == $stateComplete) || $order->getState() == $stateComplete || $order->getState() == $stateProcessing )
+            && (($order->getOrigData('state') == $stateComplete) || $order->getState() == $stateComplete || $order->getState() == $stateProcessing)
             ) {
 
                 $orderState=$order->getState();
@@ -269,6 +269,12 @@ class Cocote_Feed_Model_Observer
                     'priceCurrency' => 'EUR',
                     'skus'=>$skus
                 );
+
+                if($order->getState() == $stateProcessing) {
+                    foreach($order->getAllVisibleItems() as $item) {
+                        $this->setProductToUpdate($item->getProductId());
+                    }
+                }
                 Mage::log($data, null, 'cocote.log');
 
                 if (!function_exists('curl_version')) {
@@ -451,5 +457,147 @@ class Cocote_Feed_Model_Observer
         }
         return $optionsList;
     }
-}
 
+
+
+
+    public function afterProductSave($observer)
+    {
+        set_error_handler(
+            function ($errno, $errstr, $errfile, $errline) {
+                throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
+            }
+        );
+        try
+        {
+            $product = $observer->getEvent()->getProduct();
+            if($product->getPrice()!=$product->getOrigData('price')) {
+                $this->setProductToUpdate($product->getId());
+            }
+        } catch (Exception $e) {
+            Mage::log($e->getMessage(), null, 'cocote.log');
+        }
+
+        finally {
+        restore_error_handler();
+        }
+    }
+
+    public function afterStockSave($observer)
+    {
+        set_error_handler(
+            function ($errno, $errstr, $errfile, $errline) {
+                throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
+            }
+        );
+        try
+        {
+            $item = $observer->getEvent()->getItem();
+            if($item->getQty()!=$item->getOrigData('qty')) {
+                $this->setProductToUpdate($item->getProductId());
+            }
+        } catch (Exception $e) {
+            Mage::log($e->getMessage(), null, 'cocote.log');
+        }
+
+        finally {
+            restore_error_handler();
+        }
+    }
+
+
+    public function sendPriceStockToCocote()
+    {
+        set_error_handler(
+            function ($errno, $errstr, $errfile, $errline) {
+                throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
+            }
+        );
+        try
+        {
+
+            $updates=Mage::getModel('cocote_feed/product')->getCollection();
+
+            if(!$updates->getSize()) {
+                return; //no products to send
+            }
+
+            if (!function_exists('curl_version')) {
+                throw new Exception('no curl');
+            }
+
+            $productsToUpdate=[];
+
+            foreach($updates as $prod) {
+                $productsToUpdate[]=$prod->getData('product_id');
+                $prod->delete();
+            }
+
+            $defaultStoreView = $this->getDefaultStoreView();
+
+            $collection = Mage::getModel('catalog/product')->getCollection();
+            $collection->setStoreId($defaultStoreView);
+            $collection->addAttributeToSelect('price');
+            $collection->addAttributeToSelect('special_price');
+            $collection->addAttributeToSelect('special_price_to');
+            $collection->addAttributeToSelect('special_price_from');
+
+            $collection->addAttributeToFilter('entity_id',['in'=>$productsToUpdate]);
+
+            $collection->joinField(
+                'qty',
+                'cataloginventory/stock_item',
+                'qty',
+                'product_id=entity_id',
+                '{{table}}.stock_id=1',
+                'left'
+            );
+
+            $offers=[];
+
+            foreach($collection as $product) {
+                $offer=[];
+
+                $offer['id']=$product->getId();
+                $offer['price']=$product->getFinalPrice();
+                $offer['stock']=$product->getQty();
+                $offer['variations']=[];
+                $offers[]=$offer;
+            }
+
+            $data = array(
+                'shopId' => Mage::getStoreConfig('cocote/catalog/shop_id'),
+                'privateKey' => Mage::getStoreConfig('cocote/catalog/shop_key'),
+                'offers'=>$offers
+            );
+
+            //$dataJson=json_encode($data);
+            Mage::log($data, null, 'cocote.log');
+
+            $curl = curl_init();
+            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "PUT");
+            curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data));
+            curl_setopt($curl, CURLOPT_TIMEOUT_MS, 1000);
+            curl_setopt($curl, CURLOPT_URL, "https://fr.cocote.com/api/products");
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+            $result = curl_exec($curl);
+            curl_close($curl);
+
+        } catch (Exception $e) {
+            Mage::log($e->getMessage(), null, 'cocote.log');
+        }
+
+        finally {
+            restore_error_handler();
+        }
+
+    }
+
+    public function setProductToUpdate($productId) {
+        $cocoteProduct=Mage::getModel('cocote_feed/product');
+        $cocoteProduct->setData('product_id',$productId);
+        $cocoteProduct->save();
+
+    }
+
+}

@@ -2,14 +2,23 @@
 <config>
     <modules>
         <Cocote_Feed>
-            <version>0.9.9</version>
+            <version>1.0.1</version>
         </Cocote_Feed>
     </modules>
     <global>
         <models>
             <cocote_feed>
                 <class>Cocote_Feed_Model</class>
+                <resourceModel>cocote_feed_resource</resourceModel>
             </cocote_feed>
+            <cocote_feed_resource>
+                <class>Cocote_Feed_Model_Resource</class>
+                <entities>
+                    <product>
+                        <table>cocote_product</table>
+                    </product>
+                </entities>
+            </cocote_feed_resource>
         </models>
         <blocks>
             <cocote_feed>
@@ -21,6 +30,14 @@
                 <class>Cocote_Feed_Helper</class>
             </cocote_feed>
         </helpers>
+        <resources>
+            <cocote_feed_setup>
+                <setup>
+                    <module>Cocote_Feed</module>
+                    <class>Mage_Catalog_Model_Resource_Setup</class>
+                </setup>
+            </cocote_feed_setup>
+        </resources>
         <events>
             <sales_order_save_after>
                 <observers>
@@ -30,6 +47,22 @@
                     </cocote_send_order>
                 </observers>
             </sales_order_save_after>
+            <catalog_product_save_after>
+                <observers>
+                    <cocote_send_product>
+                        <class>cocote_feed/observer</class>
+                        <method>afterProductSave</method>
+                    </cocote_send_product>
+                </observers>
+            </catalog_product_save_after>
+            <cataloginventory_stock_item_save_after>
+                <observers>
+                    <cocote_send_product_qty>
+                        <class>cocote_feed/observer</class>
+                        <method>afterStockSave</method>
+                    </cocote_send_product_qty>
+                </observers>
+            </cataloginventory_stock_item_save_after>
         </events>
     </global>
     <frontend>
