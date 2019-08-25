@@ -63,4 +63,22 @@ class Cocote_Feed_Helper_Data extends Mage_Core_Helper_Abstract
         return $defaultStoreView;
     }
 
+    public function saveToken($token,$orderId) {
+        $resource = Mage::getSingleton('core/resource');
+        $writeConnection = $resource->getConnection('core_write');
+        $query="insert into cocote_token (order_id,token) values ('".$orderId."','".$token."')";
+        $writeConnection->query($query);
+        setcookie('Cocote-token', null, -1, '/');
+    }
+
+    public function getToken($orderId) {
+        $resource = Mage::getSingleton('core/resource');
+        $readConnection = $resource->getConnection('core_read');
+
+        $query = 'SELECT token FROM cocote_token WHERE order_id = ' . (int)$orderId . ' LIMIT 1';
+        $token = $readConnection->fetchOne($query);
+        return $token;
+
+    }
+
 }

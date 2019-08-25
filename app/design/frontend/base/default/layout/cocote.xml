@@ -5,10 +5,5 @@
             <block type="core/template" before="-" name="cocote" template="cocote/cocote.phtml" />
         </reference>
     </default>
-    
-    <checkout_onepage_success>
-            <reference name="before_body_end">
-            <block type="core/template" after="cocote" name="cocote_tracking" template="cocote/tracking.phtml" />
-        </reference>
-    </checkout_onepage_success>
+
 </layout>

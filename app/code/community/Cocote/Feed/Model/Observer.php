@@ -237,9 +237,20 @@ class Cocote_Feed_Model_Observer
             }
         );
         try {
-            $mappedStatuses=array('complete'=>'completed');
+
+            $mappedStatuses=array('complete'=>'shipped',
+                                  'processing'=>'paid',
+                                  'closed' =>'refunded'
+
+                );
 
             $order = $observer->getEvent()->getOrder();
+            $token='';
+
+            if(isset($_COOKIE["Cocote-token"])) {
+                $token=htmlspecialchars($_COOKIE["Cocote-token"]);
+                Mage::helper('cocote_feed')->saveToken($token,$order->getId());
+            }
 
             $stateComplete = $order::STATE_COMPLETE;
             $stateProcessing=$order::STATE_PROCESSING;
@@ -249,26 +260,37 @@ class Cocote_Feed_Model_Observer
             ) {
 
                 $orderState=$order->getState();
+                //A value in “paid”, “shipped”,“partially_refunded”, refunded
                 if(isset($mappedStatuses[$orderState])) {
                     $orderState=$mappedStatuses[$orderState];
                 }
 
-                $skus=array();
+                $items=array();
                 foreach ($order->getAllVisibleItems() as $item) {
-                    $skus[]=$item->getSku();
+                    $items[]=['id'=>$item->getSku(),'qty'=>1];
                 }
-                $skus=implode(',',$skus);
 
+                if(!$token) {
+                    $token=Mage::helper('cocote_feed')->getToken($order->getId());
+                }
+
+                $refundedAmount=0;
+                if($order->getData('base_total_refunded')) {
+                    $refundedAmount=$order->getData('base_total_refunded');
+                }
                     $data = array(
-                    'shopId' => Mage::getStoreConfig('cocote/catalog/shop_id'),
-                    'privateKey' => Mage::getStoreConfig('cocote/catalog/shop_key'),
-                    'email' => $order->getCustomerEmail(),
                     'orderId' => $order->getIncrementId(),
+                    'orderDate' => $order->getCreatedAt(),
                     'orderState' => $orderState,
-                    'orderPrice' => $order->getGrandTotal(),
-                    'priceCurrency' => 'EUR',
-                    'skus'=>$skus
+                    'refundedAmount' => $refundedAmount,
+                    'orderAmount' => $order->getGrandTotal(),
+                    'currencyCode' => 'EUR',
+                    'customerToken' =>$token,
+                    'trackingUrl'=>'',
+                    'products'=>$items, //id quantity array
                 );
+
+                $dataJson = json_encode($data);
 
                 if($order->getState() == $stateProcessing) {
                     foreach($order->getAllVisibleItems() as $item) {
@@ -282,10 +304,19 @@ class Cocote_Feed_Model_Observer
                 }
 
                 $curl = curl_init();
+                curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+                    'X-Shop-Id: '.Mage::getStoreConfig('cocote/catalog/shop_id'),
+                    'X-Secret-Key: '.Mage::getStoreConfig('cocote/catalog/shop_key'),
+                    'X-Site-Version: Magento '.Mage::getVersion(),
+                    'X-Plugin-Version:'.(string)Mage::getConfig()->getNode('modules/Cocote_Feed/version'),
+                    'Content-Type: application/json',
+                    'Content-Length: ' . strlen($dataJson),
+                ));
+
                 curl_setopt($curl, CURLOPT_POST, 1);
-                curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+                curl_setopt($curl, CURLOPT_POSTFIELDS, $dataJson);
                 curl_setopt($curl, CURLOPT_TIMEOUT_MS, 1000);
-                curl_setopt($curl, CURLOPT_URL, "https://fr.cocote.com/api/cashback/request");
+                curl_setopt($curl, CURLOPT_URL, "https://fr.cocote.com/api/shops/v2/notify-order");
                 curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
                 $result = curl_exec($curl);
                 curl_close($curl);
@@ -458,9 +489,6 @@ class Cocote_Feed_Model_Observer
         return $optionsList;
     }
 
-
-
-
     public function afterProductSave($observer)
     {
         set_error_handler(
@@ -504,7 +532,6 @@ class Cocote_Feed_Model_Observer
             restore_error_handler();
         }
     }
-
 
     public function sendPriceStockToCocote()
     {
@@ -597,7 +624,7 @@ class Cocote_Feed_Model_Observer
         $cocoteProduct=Mage::getModel('cocote_feed/product');
         $cocoteProduct->setData('product_id',$productId);
         $cocoteProduct->save();
-
     }
-
 }
+
+
