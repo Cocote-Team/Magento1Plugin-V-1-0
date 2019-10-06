@@ -81,4 +81,118 @@ class Cocote_Feed_Helper_Data extends Mage_Core_Helper_Abstract
 
     }
 
+    public function createOrder($data) {
+        $defaultStoreView = Mage::getStoreConfig('cocote/catalog/store');
+        if ($defaultStoreView) {
+            return $defaultStoreView;
+        }
+
+        $defaultStoreView = Mage::app()->getWebsite(true)->getDefaultGroup()->getDefaultStoreId();
+
+        Mage::app()->setCurrentStore($defaultStoreView); // adjust according to config setting
+
+//        $store = Mage::app()->getStore();
+//        $website = Mage::app()->getWebsite();
+
+// initialize sales quote object
+        $quote = Mage::getModel('sales/quote')->setStoreId($defaultStoreView);
+        $quote->setData($data['customer_data']);
+        $quote->setCocote(1);
+        $quote->setCurrency(Mage::app()->getStore()->getBaseCurrencyCode());
+
+// add products to quote
+        foreach($data['products'] as $productId => $qty) {
+            $product = Mage::getModel('catalog/product')->load($productId);
+            $quote->addProduct($product, $qty);
+        }
+
+// add billing address to quote
+        $billingAddressData = $quote->getBillingAddress()->addData($data['billing_address']);
+
+// add shipping address to quote
+        $shippingAddressData = $quote->getShippingAddress()->addData($data['shipping_address']);
+
+// collect shipping rates on quote
+        $shippingAddressData->setCollectShippingRates(true)
+            ->collectShippingRates();
+
+// set shipping method and payment method on the quote
+
+        $shippingAddressData->setShippingMethod('cocote_cocote')
+            ->setPaymentMethod('cocote');
+
+// Set payment method for the quote
+
+//        Mage::getSingleton('checkout/session')->setCocote(1);
+        $quote->setCocote(1);
+        $quote->setCocoteShippingPrice(6);
+        $quote->getPayment()->importData(array('method' => 'cocote'));
+        try {
+            $quote->collectTotals()->save();
+
+            // create order from quote
+            $service = Mage::getModel('sales/service_quote', $quote);
+            $service->submitAll();
+            $increment_id = $service->getOrder()->getRealOrderId();
+
+            echo 'Order Id: ' .$increment_id;
+
+        } catch (Exception $e) {
+            Mage::logException($e);
+        }
+    }
+
+    public function testOrderCreate() {
+        $data=[];
+
+        $productIds = array(666 => 1);
+        $data['products']=$productIds;
+
+        $customerData=[
+            'customer_is_guest'=>1,
+            'customer_firstname'=>'fn',
+            'customer_lastname'=>'lasnt',
+            'customer_email'=>'jaki@taki.pl'
+        ];
+        $data['customer_data']=$customerData;
+
+        $billingAddress = array(
+            'firstname' => 'first',
+            'middlename' => '',
+            'lastname' => 'lastname',
+            'company' => '',
+            'street' => array(
+                '0' => 'Thunder River Boulevard', // required
+                '1' => 'Customer Address 2' // optional
+            ),
+            'city' => 'Teramuggus',
+            'country_id' => 'FR', // country code
+            'region' => 'Alaska',
+            'region_id' => '2',
+            'postcode' => '99767',
+            'telephone' => '123-456-7890',
+        );
+
+        $shippingAddress = array(
+            'firstname' => 'firstname',
+            'lastname' => 'lastname',
+            'company' => '',
+            'street' => array(
+                '0' => 'Thunder River Boulevard', // required
+                '1' => 'Customer Address 2' // optional
+            ),
+            'city' => 'Teramuggus',
+            'country_id' => 'FR',
+            'region' => 'Alaska',
+            'region_id' => '2',
+            'postcode' => '99767',
+            'telephone' => '123-456-7890',
+            'cocote' => 'true',
+        );
+
+        $data['billing_address']= $billingAddress;
+        $data['shipping_address'] =$shippingAddress;
+        $this->createOrder($data);
+    }
+
 }

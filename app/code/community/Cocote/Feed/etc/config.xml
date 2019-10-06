@@ -2,7 +2,7 @@
 <config>
     <modules>
         <Cocote_Feed>
-            <version>2.0.0</version>
+            <version>2.0.1</version>
         </Cocote_Feed>
     </modules>
     <global>
@@ -124,6 +124,28 @@
                 <path>media/feed</path>
             </generate>
         </cocote>
+        <payment>
+            <cocote>
+                <model>cocote_feed/payment_cocote</model>
+                <active>0</active>
+                <order_status>pending</order_status>
+                <title>cocote</title>
+                <payment_action>sale</payment_action>
+                <submit_url>https://someurl.com</submit_url>
+                <merchant_id>Insert merchant id</merchant_id>
+                <allowspecific>0</allowspecific>
+                <sort_order>1</sort_order>
+            </cocote>
+        </payment>
+        <carriers>
+            <cocote>
+                <active>1</active>
+                <model>cocote_feed/shipping_cocote</model>
+                <title>Cocote</title>
+                <sort_order>10</sort_order>
+                <sallowspecific>0</sallowspecific>
+            </cocote>
+        </carriers>
     </default>
     <crontab>
         <jobs>
