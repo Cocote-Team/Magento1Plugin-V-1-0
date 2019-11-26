@@ -165,15 +165,15 @@ class Cocote_Feed_Helper_Orders extends Mage_Core_Helper_Abstract
                 $productIds[]=$this->getConfigurableProductsData($product);
             }
             else {
-                $product = Mage::getModel('catalog/product')->load($product['id']);
+                $simpleProduct = Mage::getModel('catalog/product')->load($product['id']);
                 $params = array(
-                    'product' => $product->getId(),
+                    'product' => $simpleProduct->getId(),
                     'qty' => $product['quantity'],
                     'price' => $product['unit_price_vat'],
                 );
                 $request = new Varien_Object();
                 $request->setData($params);
-                $productIds[] = ['prod' => $product, 'params' => $request];
+                $productIds[] = ['prod' => $simpleProduct, 'params' => $request];
             }
         }
 
