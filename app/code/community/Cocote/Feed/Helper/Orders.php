@@ -3,6 +3,21 @@
 class Cocote_Feed_Helper_Orders extends Mage_Core_Helper_Abstract
 {
 
+    public function testOrderCreate()
+    {
+        $ordersNew=$this->getOrdersFromCocote();
+        if(isset($ordersNew['orders'])) {
+            foreach($ordersNew['orders'] as $orderData) {
+                print_r($orderData);
+                $data=$this->prepareOrderData($orderData);
+//                print_r($data);
+                $this->createOrder($data);
+            }
+        }
+        else {
+            Mage::log($ordersNew['errors'], null, 'cocote.log');
+        }
+    }
 
     public function getOrdersFromCocote()
     {
@@ -60,7 +75,22 @@ class Cocote_Feed_Helper_Orders extends Mage_Core_Helper_Abstract
         $quote->setCurrency(Mage::app()->getStore()->getBaseCurrencyCode());
 
         foreach ($data['products'] as $request) {
-            $quote->addProduct($request['prod'], $request['params']);
+            $item=$quote->addProduct($request['prod'], $request['params']);
+            $quote->save();
+
+            $customPrice=$request['params']['custom_price'];
+
+            if($item->getParentItemId()) {
+                $parentItem=$item->getParentItem();
+                $parentItem->setIsSuperMode(1);
+                $parentItem->setCustomPrice($customPrice);
+                $parentItem->setOriginalCustomPrice($customPrice);
+                $parentItem->save();
+            }
+            $item->setIsSuperMode(1);
+            $item->setCustomPrice($customPrice);
+            $item->setOriginalCustomPrice($customPrice);
+            $item->save();
         }
 
         $billingAddressData = $quote->getBillingAddress()->addData($data['billing_address']);
@@ -84,22 +114,6 @@ class Cocote_Feed_Helper_Orders extends Mage_Core_Helper_Abstract
 
         } catch (Exception $e) {
             Mage::logException($e);
-        }
-    }
-
-    public function testOrderCreate()
-    {
-        $ordersNew=$this->getOrdersFromCocote();
-        if(isset($ordersNew['orders'])) {
-            foreach($ordersNew['orders'] as $orderData) {
-                print_r($orderData);
-                $data=$this->prepareOrderData($orderData);
-                print_r($data);
-                //$this->createOrder($data);
-            }
-        }
-        else {
-            Mage::log($ordersNew['errors'], null, 'cocote.log');
         }
     }
 
@@ -161,15 +175,22 @@ class Cocote_Feed_Helper_Orders extends Mage_Core_Helper_Abstract
         $productIds = [];
 
         foreach($orderData['products'] as $product) {
-            if(isset($product['variation_id'])) {
-                $productIds[]=$this->getConfigurableProductsData($product);
+            if(isset($product['variation_id']) && $product['variation_id']) {
+                $confData=$this->getConfigurableProductsData($product);
+                if($confData) {
+                    $productIds[]=$confData;
+                }
             }
             else {
                 $simpleProduct = Mage::getModel('catalog/product')->load($product['id']);
+                if(!$simpleProduct->getId()) {
+                    Mage::log('wrong product - '.$product['id'], null, 'cocote.log');
+                    continue;
+                }
                 $params = array(
                     'product' => $simpleProduct->getId(),
                     'qty' => $product['quantity'],
-                    'price' => $product['unit_price_vat'],
+                    'custom_price' => $product['unit_price_vat'],
                 );
                 $request = new Varien_Object();
                 $request->setData($params);
@@ -184,6 +205,12 @@ class Cocote_Feed_Helper_Orders extends Mage_Core_Helper_Abstract
     public function getConfigurableProductsData($product) {
 
         $configurableProduct = Mage::getModel('catalog/product')->load($product['id']);
+
+        if(!$configurableProduct->getId()) {
+            Mage::log('wrong product - '.$product['id'], null, 'cocote.log');
+            return null;
+        }
+
         $variationProduct = Mage::getModel('catalog/product')->load($product['variation_id']);
         $productAttributeOptions = $configurableProduct->getTypeInstance(true)->getConfigurableAttributesAsArray($configurableProduct);
         $options = array();
@@ -196,7 +223,7 @@ class Cocote_Feed_Helper_Orders extends Mage_Core_Helper_Abstract
             }
         }
         $params = array(
-            'price' => $product['unit_price_vat'],
+            'custom_price' => $product['unit_price_vat'],
             'product' => $configurableProduct->getId(),
             'qty' => $product['quantity'],
             'super_attribute' => $options
