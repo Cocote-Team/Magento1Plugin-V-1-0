@@ -8,7 +8,7 @@ class Cocote_Feed_Helper_Orders extends Mage_Core_Helper_Abstract
         $ordersNew=$this->getOrdersFromCocote();
         if(isset($ordersNew['orders'])) {
             foreach($ordersNew['orders'] as $orderData) {
-                print_r($orderData);
+//                print_r($orderData);
                 $data=$this->prepareOrderData($orderData);
 //                print_r($data);
                 $this->createOrder($data);
@@ -66,12 +66,15 @@ class Cocote_Feed_Helper_Orders extends Mage_Core_Helper_Abstract
             return $defaultStoreView;
         }
 
+        $shippingPrice=$data['shipping_cost'];
+
         $defaultStoreView = Mage::app()->getWebsite(true)->getDefaultGroup()->getDefaultStoreId();
         Mage::app()->setCurrentStore($defaultStoreView); // adjust according to config setting
 
         $quote = Mage::getModel('sales/quote')->setStoreId($defaultStoreView);
         $quote->setData($data['customer_data']);
         $quote->setCocote(1);
+        $quote->setCocoteShippingPrice($shippingPrice);
         $quote->setCurrency(Mage::app()->getStore()->getBaseCurrencyCode());
 
         foreach ($data['products'] as $request) {
@@ -100,7 +103,7 @@ class Cocote_Feed_Helper_Orders extends Mage_Core_Helper_Abstract
         $shippingAddressData->setShippingMethod('cocote_cocote')->setPaymentMethod('cocote');
 
         $quote->setCocote(1);
-        $quote->setCocoteShippingPrice(6);
+        $quote->setCocoteShippingPrice($shippingPrice);
         $quote->getPayment()->importData(array('method' => 'cocote'));
         try {
             $quote->collectTotals()->save();
@@ -130,12 +133,7 @@ class Cocote_Feed_Helper_Orders extends Mage_Core_Helper_Abstract
         ];
         $data['customer_data'] = $customerData;
 
-        $countryName=$orderData['billing_address']['billing_country'];
-        foreach ($countriesList as $id => $name) {
-            if ($name == $countryName) {
-                $billingCountryCode=$id;
-            }
-        }
+        $data['shipping_cost']=$orderData['shipping_costs_vat'];
 
         $data['billing_address'] = [
             'firstname' => $orderData['billing_address']['billing_firstname'],
@@ -143,19 +141,12 @@ class Cocote_Feed_Helper_Orders extends Mage_Core_Helper_Abstract
             'company' => $orderData['billing_address']['billing_company_name'],
             'street' => [$orderData['billing_address']['billing_address1'],$orderData['billing_address']['billing_address2']],
             'city' => $orderData['billing_address']['billing_city'],
-            'country_id' => $billingCountryCode,
+            'country_id' => $orderData['billing_address']['billing_country_code'],
 //            'region' => 'Alaska',
 //            'region_id' => '2',
             'postcode' => $orderData['billing_address']['billing_postcode'],
             'telephone' => $orderData['billing_address']['billing_phone']
         ];
-
-        $countryName=$orderData['delivery_address']['delivery_country'];
-        foreach ($countriesList as $id => $name) {
-            if ($name == $countryName) {
-                $deliveryCountryCode=$id;
-            }
-        }
 
         $data['shipping_address'] = [
             'firstname' => $orderData['delivery_address']['delivery_firstname'],
@@ -163,7 +154,7 @@ class Cocote_Feed_Helper_Orders extends Mage_Core_Helper_Abstract
             'company' => $orderData['delivery_address']['delivery_company_name'],
             'street' => [$orderData['delivery_address']['delivery_address1'],$orderData['delivery_address']['delivery_address2']],
             'city' => $orderData['delivery_address']['delivery_city'],
-            'country_id' => $deliveryCountryCode,
+            'country_id' => $orderData['delivery_address']['delivery_country_code'],
 //            'region' => 'Alaska',
 //            'region_id' => '2',
             'postcode' => $orderData['delivery_address']['delivery_postcode'],

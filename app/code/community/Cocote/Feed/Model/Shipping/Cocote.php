@@ -5,6 +5,7 @@ class Cocote_Feed_Model_Shipping_Cocote
     implements Mage_Shipping_Model_Carrier_Interface
 {
     protected $_code = 'cocote';
+    protected $specialPrice=10;
 
     public function collectRates(Mage_Shipping_Model_Rate_Request $request )
     {
@@ -17,6 +18,10 @@ class Cocote_Feed_Model_Shipping_Cocote
 
         $result = Mage::getModel('shipping/rate_result');
         /* @var $result Mage_Shipping_Model_Rate_Result */
+
+        if($quote->getCocoteShippingPrice()) {
+            $this->specialPrice=$quote->getCocoteShippingPrice();
+        }
 
         $result->append($this->_getStandardShippingRate());
 
@@ -38,7 +43,7 @@ class Cocote_Feed_Model_Shipping_Cocote
         $rate->setMethod('cocote');
         $rate->setMethodTitle('Cocote');
 
-        $rate->setPrice(4.99);
+        $rate->setPrice($this->specialPrice);
         $rate->setCost(0);
 
         return $rate;
