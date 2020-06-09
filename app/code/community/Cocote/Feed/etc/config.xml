@@ -119,6 +119,7 @@
                 <map_gtin></map_gtin>
                 <map_description>description</map_description>
                 <map_manufacturer>manufacturer</map_manufacturer>
+                <prefix>cocote-</prefix>
             </catalog>
             <generate>
                 <path>media/feed</path>

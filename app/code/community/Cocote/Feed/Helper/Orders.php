@@ -61,6 +61,8 @@ class Cocote_Feed_Helper_Orders extends Mage_Core_Helper_Abstract
 
     public function createOrder($data)
     {
+
+        $prefix=Mage::getStoreConfig('cocote/catalog/prefix');
         $defaultStoreView = Mage::getStoreConfig('cocote/catalog/store');
         if ($defaultStoreView) {
             return $defaultStoreView;
@@ -107,6 +109,8 @@ class Cocote_Feed_Helper_Orders extends Mage_Core_Helper_Abstract
         $quote->getPayment()->importData(array('method' => 'cocote'));
         try {
             $quote->collectTotals()->save();
+            $quote->reserveOrderId();
+            $quote->setData('reserved_order_id',$prefix.$quote->getData('reserved_order_id'));
 
             // create order from quote
             $service = Mage::getModel('sales/service_quote', $quote);
