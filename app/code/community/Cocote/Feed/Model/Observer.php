@@ -48,6 +48,7 @@ class Cocote_Feed_Model_Observer
         $collection->addAttributeToSelect('special_price_from');
         $collection->addAttributeToSelect('image');
         $collection->addAttributeToSelect('meta_keyword');
+        $collection->addAttributeToSelect('short_description');
 
         $collection->addAttributeToFilter('visibility', array('in'=>array(2,3,4))); //2/3/4 = catalog/search/both                
         $collection->addAttributeToFilter('status', 1);
@@ -158,6 +159,10 @@ class Cocote_Feed_Model_Observer
             $currentprod->appendChild($domtree->createElement('identifier', $product->getId()));
             $currentprod->appendChild($domtree->createElement('link', $url));
             $currentprod->appendChild($domtree->createElement('keywords', htmlspecialchars($product->getData('meta_keyword'))));
+
+            $descTag=$domtree->createElement('short_description');
+            $descTag->appendChild($domtree->createCDATASection($product->getData('short_description')));
+            $currentprod->appendChild($descTag);
 
             if ($product->getTypeId() == 'configurable') {
                 $configurableOptions = $this->getConfigurableOptions($product,$domtree);
@@ -478,6 +483,11 @@ class Cocote_Feed_Model_Observer
             $descTag=$domtree->createElement('variation_description');
             $descTag->appendChild($domtree->createCDATASection($simpleProd->getDescription()));
             $variation->appendChild($descTag);
+
+            $descTag=$domtree->createElement('variation_short_description');
+            $descTag->appendChild($domtree->createCDATASection($simpleProd->getData('short_description')));
+            $variation->appendChild($descTag);
+
 
             if($simpleProd->getImage()) {
                 $image=Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA) . 'catalog/product'.$simpleProd->getImage();
