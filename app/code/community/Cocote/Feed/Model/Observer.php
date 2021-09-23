@@ -49,6 +49,7 @@ class Cocote_Feed_Model_Observer
         $collection->addAttributeToSelect('image');
         $collection->addAttributeToSelect('meta_keyword');
         $collection->addAttributeToSelect('short_description');
+        $collection->addAttributeToSelect('weight');
 
         $collection->addAttributeToFilter('visibility', array('in'=>array(2,3,4))); //2/3/4 = catalog/search/both                
         $collection->addAttributeToFilter('status', 1);
@@ -183,6 +184,10 @@ class Cocote_Feed_Model_Observer
                 $currentprod->appendChild($domtree->createElement('stock', (int)$product->getQty()));
                 $currentprod->appendChild($domtree->createElement('threshold_stock', (int)$product->getData('min_qty')));
             }
+            if($product->getData('weight')) {
+                $currentprod->appendChild($domtree->createElement('weight', (int)$product->getWeight()));
+            }
+
 
             $currentprod->appendChild($domtree->createElement('price', $price));
 
@@ -475,6 +480,9 @@ class Cocote_Feed_Model_Observer
             $variation->appendChild($domtree->createElement('variation_id',$simpleProd->getId()));
             $variation->appendChild($domtree->createElement('variation_name',$simpleProd->getName()));
             $variation->appendChild($domtree->createElement('variation_reference',$simpleProd->getSku()));
+            if($simpleProd->getWeight()) {
+                $variation->appendChild($domtree->createElement('variation_weight',$simpleProd->getWeight()));
+            }
             $variation->appendChild($domtree->createElement('variation_stock',(int)$simpleProd->getStockItem()->getQty()));
             $variation->appendChild($domtree->createElement('variation_threshold_stock',(int)$simpleProd->getStockItem()->getMinQty()));
             $variation->appendChild($domtree->createElement('variation_price',$simplePrice));
